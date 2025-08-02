@@ -1,5 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform } from "framer-motion";
+import { useInView } from "framer-motion";
+import { InView } from "react-intersection-observer";
+
+
 
 const services = [
     { title: "Doku Kültürü", description: "Steril üretim, hastalıksız bitkiler." },
@@ -11,6 +15,7 @@ const services = [
 ];
 
 export default function ServicesSectionCircle() {
+    const mobileRef = useRef(null);
     const sectionRef = useRef(null);
     const [radius, setRadius] = useState(0);
     const [animateText, setAnimateText] = useState(false);
@@ -68,61 +73,104 @@ export default function ServicesSectionCircle() {
                 Hizmetlerimiz
             </motion.h2>
 
-            {/* Masaüstü Dairesel Görünüm */}
+
+
             {!isMobile && (
-                <div className="relative w-[1000px] h-[1000px] mx-auto transition-all duration-[1500ms]">
-                    <img
-                        src="/assets/servicesmidr.png"
-                        alt="DNA Sarmalı"
-                        className="w-60 h-60 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
-                    />
+                <div className="relative w-[1000px] h-[1000px] mx-auto">
+                    {/* Sabit DNA görseli */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                        <img
+                            src="/assets/servicesmidr.png"
+                            alt="DNA Sarmalı"
+                            className="w-60 h-60"
+                        />
+                    </div>
 
-                    {services.map((s, i) => {
-                        const angle = (360 / services.length) * i;
-                        const x = radius * Math.cos((angle * Math.PI) / 180);
-                        const y = radius * Math.sin((angle * Math.PI) / 180);
+                    {/* Dönme animasyon kapsayıcısı */}
+                    <motion.div
+                        className="absolute top-0 left-0 w-full h-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 50, ease: "linear" }}
+                        style={{ transformOrigin: "50% 50%" }}
+                    >
+                        {services.map((s, i) => {
+                            const angle = (360 / services.length) * i;
+                            const radius = 330;
+                            const x = radius * Math.cos((angle * Math.PI) / 180);
+                            const y = radius * Math.sin((angle * Math.PI) / 180);
 
-                        return (
-                            <div
-                                key={i}
-                                className="absolute w-48 h-48 rounded-full border-y-4 border-green-700 outline-2 outline-green-700 p-2 overflow-hidden shadow-lg transition-all duration-[1500ms]"
-                                style={{
-                                    top: `calc(50% + ${y}px - 96px)`,
-                                    left: `calc(50% + ${x}px - 96px)`,
-                                }}
-                            >
-                                <img
-                                    src="/assets/servicesmidr.png"
-                                    alt={s.title}
-                                    className="w-full h-full object-cover opacity-30"
-                                />
+                            return (
                                 <div
-                                    className={`absolute inset-0 flex flex-col items-center justify-center text-center px-2 transition-all duration-1000 ${animateText ? "opacity-100" : "opacity-0"
-                                        }`}
+                                    key={i}
+                                    className="absolute w-48 h-48 rounded-full border-y-4 border-green-700 outline-2 outline-green-700 p-2 overflow-hidden shadow-lg bg-white/60 backdrop-blur-md"
+                                    style={{
+                                        top: `calc(50% + ${y}px - 96px)`,
+                                        left: `calc(50% + ${x}px - 96px)`,
+                                    }}
                                 >
-                                    <h3 className="text-green-800 font-bold text-md">{s.title}</h3>
-                                    <p className="text-xs text-gray-700 mt-1">{s.description}</p>
+                                    <motion.div
+                                        className="w-full h-full relative"
+                                        animate={{ rotate: -360 }} // yazıları ters yönde döndür
+                                        transition={{ repeat: Infinity, duration: 50, ease: "linear" }}
+                                    >
+                                        <img
+                                            src="/assets/servicesmidr.png"
+                                            alt={s.title}
+                                            className="w-full h-full object-cover opacity-30"
+                                        />
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-2">
+                                            <h3 className="text-green-800 font-bold text-md">{s.title}</h3>
+                                            <p className="text-xs text-gray-700 mt-1">{s.description}</p>
+                                        </div>
+                                    </motion.div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </motion.div>
                 </div>
             )}
 
             {/* Mobil Dikey Görünüm */}
             {isMobile && (
-                <div className="flex flex-col items-center justify-center mt-10 gap-6 px-6 relative z-10">
+                <div
+                    ref={mobileRef}
+                    className="flex flex-col items-center justify-center mt-10 gap-6 px-6 relative z-10"
+                >
                     {services.map((s, i) => (
-                        <div
-                            key={i}
-                            className="bg-white/60 backdrop-blur-md rounded-xl border border-green-700 shadow-lg w-full max-w-xs p-4 text-center"
-                        >
-                            <h3 className="text-green-800 font-semibold text-lg">{s.title}</h3>
-                            <p className="text-gray-700 text-sm mt-2">{s.description}</p>
-                        </div>
+                        <InView triggerOnce rootMargin="-100px" key={i}>
+                            {({ ref, inView }) => (
+                                <motion.div
+                                    ref={ref}
+                                    className="bg-white/60 backdrop-blur-md rounded-xl border-y-4 border-green-700 outline-2 outline-green-700 shadow-lg w-full max-w-xs p-4 text-center"
+                                    initial={{ opacity: 0, y: 40 }}
+                                    animate={inView ? { opacity: 1, y: 0 } : {}}
+                                    transition={{ duration: 0.6, delay: i * 0.3 }}
+                                >
+                                    <motion.h3
+                                        className="text-green-800 font-semibold text-lg"
+                                        initial={{ opacity: 0, x: -50 }}
+                                        animate={inView ? { opacity: 1, x: 0 } : {}}
+                                        transition={{ duration: 0.6, delay: i * 0.35 + 0.15 }}
+                                    >
+                                        {s.title}
+                                    </motion.h3>
+                                    <motion.p
+                                        className="text-gray-700 text-sm mt-2"
+                                        initial={{ opacity: 0, x: 50 }}
+                                        animate={inView ? { opacity: 1, x: 0 } : {}}
+                                        transition={{ duration: 0.6, delay: i * 0.35 + 0.3 }}
+                                    >
+                                        {s.description}
+                                    </motion.p>
+                                </motion.div>
+                            )}
+                        </InView>
                     ))}
                 </div>
             )}
+
+
+
         </section>
     );
 }

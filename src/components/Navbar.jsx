@@ -15,7 +15,7 @@ export default function Navbar() {
     return (
         <nav className="w-full bg-white fixed top-0 left-0 z-50 shadow-md">
             <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-                <img src="../assets/plantesis-logo.png" alt="" />
+                <img src="../assets/golgelilogo.png" alt="" className="object-contain" />
 
 
                 {/* Desktop menu */}
